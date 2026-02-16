@@ -162,25 +162,28 @@ pipeline {
                 }
             }
         }
-        stage("Build Docker Image") {
-            steps {
-                dir('src/frontend') {
-                    script {
-                        env.IMAGE_TAG = "$DOCKER_NAME:${BUILD_NUMBER}"
+        
+stage("Build Docker Image") {
+  steps {
+    dir('src/frontend') {
+      sh '''
+        set -e
+        IMAGE_TAG="${DOCKER_NAME}:${BUILD_NUMBER}"
 
-                        // Optional cleanup
-                        sh "docker rmi -f $IMAGE_NAME ${env.IMAGE_TAG} || true"
+        docker rmi -f frontend:latest "${IMAGE_TAG}" || true
 
-			docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder
-                        docker buildx inspect --bootstrap
+        docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder
+        docker buildx inspect --bootstrap
 
-                        sh "docker build -t $IMAGE_NAME ."
-                        sh "docker tag $IMAGE_NAME ${env.IMAGE_TAG}"
-                    }
-                }
-            }
-        }
-        stage("Tag & Push to DockerHub") {
+        docker buildx build --load -t frontend:latest .
+        docker tag frontend:latest "${IMAGE_TAG}"
+      '''
+    }
+  }
+}
+
+
+stage("Tag & Push to DockerHub") {
             steps {
                 dir('src/frontend') {
                     script {
