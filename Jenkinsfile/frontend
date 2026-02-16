@@ -171,6 +171,9 @@ pipeline {
                         // Optional cleanup
                         sh "docker rmi -f $IMAGE_NAME ${env.IMAGE_TAG} || true"
 
+			docker buildx create --name jenkins-builder --use || docker buildx use jenkins-builder
+                        docker buildx inspect --bootstrap
+
                         sh "docker build -t $IMAGE_NAME ."
                         sh "docker tag $IMAGE_NAME ${env.IMAGE_TAG}"
                     }
